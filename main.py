@@ -2554,6 +2554,11 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             padding:24px;margin-bottom:14px;text-align:center;
             backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
             box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06)}}
+            .sub-link-row{{
+            display:flex;flex-direction:column;gap:8px;
+            padding:12px 0;border-bottom:1px solid rgba(96,165,250,0.1)}}
+           .sub-link-row:last-child{{border-bottom:none;padding-bottom:0}}
+           .sub-link-row:first-child{{padding-top:0}}    
         .qr-wrap{{background:#fff;border-radius:12px;padding:12px;display:inline-block;
             box-shadow:0 0 24px rgba(59,130,246,0.2);margin-bottom:14px}}
         .qr-wrap img{{width:180px;height:180px;display:block;border-radius:4px}}
@@ -2724,18 +2729,25 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         </div>
     </div>
 
-    <!-- QR Code Card -->
+    <!-- Subscription Links Card -->
     <div class="qr-card">
-        <div class="qr-label">اسکن کنید برای افزودن</div>
-        <div class="qr-wrap">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=000000&bgcolor=ffffff&data={quote(sub_url)}" alt="QR">
+        <!-- باکس اول: لینک اشتراک اصلی -->
+        <div class="sub-link-row">
+            <div class="sub-link-display" onclick="copySub()">{get_domain()}/sub/{uid}</div>
+            <button class="copy-sub-btn" onclick="copySub()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                کپی لینک اشتراک
+            </button>
         </div>
-        <div class="qr-label">لینک اشتراک</div>
-        <div class="sub-link-display" onclick="copySub()">{get_domain()}/sub/{uid}</div>
-        <button class="copy-sub-btn" onclick="copySub()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            کپی لینک اشتراک
-        </button>
+
+        <!-- باکس دوم: لینک اشتراک (تکراری - بعداً عوض می‌شه) -->
+        <div class="sub-link-row">
+            <div class="sub-link-display" onclick="copySub()">{get_domain()}/sub/{uid}</div>
+            <button class="copy-sub-btn" onclick="copySub()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                کپی لینک اشتراک
+            </button>
+        </div>
     </div>
 
     <!-- Easy Import Section -->
