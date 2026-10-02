@@ -2583,6 +2583,10 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             padding:18px;margin-bottom:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
             box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
         .configs-header{{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}}
+        .copy-all-btn{background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.2s;box-shadow:0 3px 10px rgba(59,130,246,.3)}
+        .copy-all-btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(59,130,246,.5)}
+        .copy-all-btn:active{transform:translateY(0) scale(.98)}
+        .copy-all-btn i{font-size:14px}
         .configs-title{{font-size:12px;font-weight:700;color:var(--text);letter-spacing:.5px}}
         .configs-count{{font-size:10px;color:var(--text3);background:var(--gold-dim);
             border:1px solid var(--border);border-radius:6px;padding:2px 8px}}
@@ -2726,12 +2730,13 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 
     <!-- Configs -->
     <div class="configs-card">
-        <div class="configs-header">
-            <div class="configs-title">کانفیگ‌ها</div>
-            <div class="configs-count" id="configs-count">0 configs</div>
-        </div>
-        <div id="config-list"></div>
-    </div>
+<div class="configs-header">
+  <div class="configs-title">کانفیگ‌ها</div>
+  <button class="copy-all-btn" onclick="copyAllConfigs()" title="کپی همه کانفیگ‌ها">
+    <i class="ti ti-copy"></i>
+    <span>کپی همه</span>
+  </button>
+</div>
 
 
 
@@ -2929,7 +2934,8 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
     // Render configs
     function renderConfigs() {{
         const list = document.getElementById('config-list');
-        document.getElementById('configs-count').textContent = configs.length + ' کانفیگ';
+const cc = document.getElementById('configs-count');
+if(cc) cc.textContent = configs.length + ' کانفیگ';
         list.innerHTML = configs.map((cfg, i) => {{
             const parts = cfg.split('#');
             const remark = parts[1] ? decodeURIComponent(parts[1]) : 'Config ' + (i+1);
@@ -2958,6 +2964,21 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         safeCopy(txt);
         showToast('کانفیگ کپی شد!');
     }}
+    
+function copyAllConfigs() {
+  try {
+    if (typeof configs === 'undefined' || !configs || !configs.length) {
+      showToast('کانفیگی برای کپی نیست');
+      return;
+    }
+    const allLinks = configs.join('\n');
+    safeCopy(allLinks);
+    showToast('همه‌ی ' + configs.length + ' کانفیگ کپی شد!');
+  } catch (e) {
+    showToast('خطا در کپی');
+  }
+}
+
 
     function showQR(txt, name) {{
         document.getElementById('qr-modal-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(txt);
