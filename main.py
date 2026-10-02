@@ -2598,8 +2598,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         .app-name{{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}}
         .app-action{{font-size:10.5px;color:var(--text3)}}
 
-        /* Custom Box */
-            .custom-box{{
+    .flags-box{{
       background:rgba(15,30,55,0.45);
       border:1px solid rgba(96,165,250,0.2);
       border-radius:20px;
@@ -2608,6 +2607,52 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
       backdrop-filter:blur(20px);
       -webkit-backdrop-filter:blur(20px);
       box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
+    .flags-box-title{{
+      font-size:12px;
+      font-weight:700;
+      color:var(--text);
+      letter-spacing:.5px;
+      margin-bottom:12px}}
+    .flags-row{{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:14px}}
+    .flags-row img{{
+      width:42px;
+      height:28px;
+      object-fit:cover;
+      border-radius:6px;
+      border:1px solid rgba(96,165,250,0.25);
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      transition:transform .2s,box-shadow .2s}}
+    .flags-row img:hover{{
+      transform:translateY(-2px) scale(1.05);
+      box-shadow:0 4px 14px rgba(59,130,246,0.4)}}
+    .flags-copy-btn{{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      width:100%;
+      padding:11px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-family:inherit;
+      font-size:13px;
+      font-weight:700;
+      background:linear-gradient(135deg,#3b82f6,#60a5fa);
+      color:#fff;
+      box-shadow:0 0 20px rgba(59,130,246,0.3);
+      transition:all .2s}}
+    .flags-copy-btn:hover{{
+      filter:brightness(1.1);
+      box-shadow:0 0 30px rgba(59,130,246,0.5);
+      transform:translateY(-1px)}}
+    .flags-copy-btn:active{{
+      transform:translateY(0)}}
+
 
         .configs-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
             padding:18px;margin-bottom:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -2734,9 +2779,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         </div>
     </div>
     
-    <!-- QR Card (empty) -->
-    <div class="qr-card">
-    </div>
 
     <!-- Easy Import Section -->
     <div class="section-label">نصب برنامه</div>
@@ -2747,6 +2789,16 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 </div>
 
     <div id="apps-container" class="apps-grid"></div>
+
+    <!-- Flags Box -->
+    <div class="flags-box">
+        <div class="flags-box-title">کشورهای موجود</div>
+        <div class="flags-row" id="flags-row"></div>
+        <button class="flags-copy-btn" onclick="copyAllConfigs()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            کپی کردن همه کانفیگ‌ها
+        </button>
+    </div>
 
     <!-- Configs -->
     <div class="configs-card">
@@ -3051,6 +3103,51 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         clearTimeout(t._t);
         t._t = setTimeout(() => t.className = 'toast', 2500);
     }}
+
+    // ── استخراج پرچم‌ها از label کانفیگ‌ها و نمایش به‌صورت PNG ──
+    function flagEmojiToCode(emoji) {{
+        if (!emoji) return null;
+        const points = [...emoji].map(c => c.codePointAt(0));
+        if (points.length !== 2) return null;
+        return points.map(p => String.fromCharCode(p - 0x1F1E6 + 65)).join('').toLowerCase();
+    }}
+
+    function renderFlags() {{
+        const row = document.getElementById('flags-row');
+        if (!row) return;
+        const seen = new Set();
+        const codes = [];
+        configs.forEach(cfg => {{
+            const parts = cfg.split('#');
+            if (!parts[1]) return;
+            const remark = decodeURIComponent(parts[1]);
+            const m = remark.match(/^([\uD83C][\uDDE6-\uDDFF][\uD83C][\uDDE6-\uDDFF])/);
+            if (!m) return;
+            const code = flagEmojiToCode(m[1]);
+            if (code && !seen.has(code)) {{
+                seen.add(code);
+                codes.push(code);
+            }}
+        }});
+        if (!codes.length) {{
+            row.innerHTML = '<div style="font-size:11px;color:var(--text3)">هیچ کشوری یافت نشد</div>';
+            return;
+        }}
+        row.innerHTML = codes.map(code =>
+            `<img src="https://flagcdn.com/w80/${{code}}.png" alt="${{code}}" loading="lazy">`
+        ).join('');
+    }}
+
+    function copyAllConfigs() {{
+        if (!configs.length) {{
+            showToast('هیچ کانفیگی موجود نیست');
+            return;
+        }}
+        safeCopy(configs.join('\\n'));
+        showToast('همه کانفیگ‌ها کپی شدند (' + configs.length + ' کانفیگ)');
+    }}
+
+    renderFlags();
 
     renderConfigs();
 </script>
