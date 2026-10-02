@@ -5859,28 +5859,7 @@ async function loadStats(){
     const svUp=$m('sv-uptime');if(svUp)svUp.textContent=sData.uptime||'-';
     const svOnline=$m('sv-online');if(svOnline)svOnline.textContent=sData.online_users||0;
     const nb=$m('nb');if(nb)nb.textContent=sData.links_count||0;
-    
-// ═══════════════════════════════════════════════════════════
-// 🕐 ساعت و تاریخ زنده‌ی ایران
-// ═══════════════════════════════════════════════════════════
-function updateIranClock(){
-  const el = $m('last-upd');
-  if(!el) return;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('fa-IR', {
-    timeZone: 'Asia/Tehran',
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  });
-  const timeStr = now.toLocaleTimeString('fa-IR', {
-    timeZone: 'Asia/Tehran',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  });
-  el.innerHTML = `<i class="ti ti-clock-hour-4" style="font-size:14px;vertical-align:-3px;margin-left:4px"></i>${dateStr} · <span style="color:var(--accent);font-weight:800">${timeStr}</span>`;
-}
-setInterval(updateIranClock, 1000);
-updateIranClock();
-
-//
+    const lu=$m('last-upd');if(lu)lu.textContent='Updated '+new Date().toLocaleTimeString();
     if($m('t-tr'))$m('t-tr').textContent=(sData.total_traffic_mb||0)+' MB';
     if($m('t-rq'))$m('t-rq').textContent=(sData.total_requests||0).toLocaleString();
     if($m('t-up'))$m('t-up').textContent=sData.uptime||'-';
