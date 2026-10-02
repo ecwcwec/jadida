@@ -2308,6 +2308,16 @@ def _fmt_bytes(b: int) -> str:
     if b >= 1_048_576: return f"{b / 1_048_576:.1f}MB"
     return f"{b / 1024:.1f}KB"
 
+def _expiry_pct(secs_left, total_days=30):
+    """درصد زمان باقی‌مانده برای پر کردن نوار زمان."""
+    if secs_left is None:
+        return 100.0
+    if secs_left <= 0:
+        return 0.0
+    total_secs = total_days * 86400
+    return min((secs_left / total_secs) * 100, 100.0)
+
+
 async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> str:
     used = link["used_bytes"]
     limit = link["limit_bytes"]
@@ -2498,37 +2508,49 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
         .header-sub{{font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase}}
 
-        /* Usage ring card */
-        .ring-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
-            padding:28px 24px;margin-bottom:14px;text-align:center;
-            backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-            box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06)}}
-        .ring-wrap{{position:relative;width:160px;height:160px;margin:0 auto 20px}}
-        .ring-svg{{width:160px;height:160px;transform:rotate(-90deg)}}
-        .ring-bg{{fill:none;stroke:rgba(59,130,246,0.08);stroke-width:10}}
-        .ring-fill{{fill:none;stroke-width:10;stroke-linecap:round;
-            stroke-dasharray:440;stroke-dashoffset:{440 - (440 * min(pct,100)/100):.1f};
-            stroke:url(#ringGrad);filter:drop-shadow(0 0 8px {ring_color1});
-            transition:stroke-dashoffset 1s ease}}
-        .ring-center{{position:absolute;inset:0;display:flex;flex-direction:column;
-            align-items:center;justify-content:center}}
-        .ring-pct{{font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px}}
-        .ring-label{{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}}
-
-        .usage-nums{{font-size:20px;font-weight:700;margin-bottom:4px}}
-        .usage-nums span{{color:var(--text3);font-size:14px;font-weight:400}}
-        .usage-sub{{font-size:11px;color:var(--text3)}}
-
-        .info-row{{display:flex;gap:12px;margin-top:18px}}
-        .info-box{{flex:1;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.1);
-            border-radius:10px;padding:10px 12px;text-align:left}}
-        .info-box-label{{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}}
-        .info-box-val{{font-size:13px;font-weight:700}}
-        .info-box-val.green{{color:var(--green)}}
-        .info-box-val.red{{color:var(--red)}}
-        .info-box-val.gold{{color:var(--gold)}}
-        .info-box-sub{{font-size:10px;color:var(--text3);margin-top:1px}}
-
+    /* Usage card (new) */
+    .ring-card{
+      background:rgba(15,30,55,0.5);border:1px solid rgba(96,165,250,0.22);border-radius:20px;
+      padding:20px 18px;margin-bottom:14px;
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06);
+      display:flex;flex-direction:column;gap:12px}
+    .usage-inner-box{
+      background:rgba(15,25,45,0.55);border:1px solid rgba(96,165,250,0.15);
+      border-radius:14px;padding:14px 16px;
+      transition:border-color .2s,background .2s}
+    .usage-inner-box:hover{
+      border-color:rgba(96,165,250,0.35);background:rgba(20,35,60,0.6)}
+    .usage-inner-head{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:10px}
+    .usage-inner-title{
+      font-size:12px;font-weight:700;color:rgba(147,197,253,0.9);letter-spacing:.3px}
+    .usage-inner-icon{font-size:16px;opacity:.9}
+    .usage-inner-val{
+      display:flex;align-items:baseline;gap:6px;
+      margin-bottom:10px;min-height:24px}
+    .usage-num{
+      font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px}
+    .usage-sep{
+      font-size:14px;color:rgba(255,255,255,0.35);font-weight:400}
+    .usage-lim{
+      font-size:14px;color:rgba(147,197,253,0.85);font-weight:600}
+    .usage-bar{
+      height:8px;background:rgba(96,165,250,0.12);
+      border-radius:4px;overflow:hidden;margin-bottom:8px}
+    .usage-bar-fill{
+      height:100%;border-radius:4px;
+      background:linear-gradient(90deg,#3b82f6,#60a5fa);
+      box-shadow:0 0 10px rgba(59,130,246,0.55);
+      transition:width .6s ease}
+    .usage-bar-time{
+      background:linear-gradient(90deg,#8b5cf6,#a78bfa);
+      box-shadow:0 0 10px rgba(139,92,246,0.55)}
+    .usage-inner-foot{
+      display:flex;align-items:center;justify-content:space-between;
+      font-size:10.5px;color:rgba(255,255,255,0.45);font-weight:500}
+      
         /* QR card */
         .qr-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
             padding:24px;margin-bottom:14px;text-align:center;
@@ -2663,43 +2685,47 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         <div class="header-sub">{link['label']} · وضعیت اتصال</div>
     </div>
 
-    <!-- Usage Ring Card -->
+    <!-- Usage & Time Card -->
     <div class="ring-card">
-        <div class="ring-wrap">
-            <svg class="ring-svg" viewBox="0 0 160 160">
-                <defs>
-                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style="stop-color:{ring_color1}"/>
-                        <stop offset="100%" style="stop-color:{ring_color2}"/>
-                    </linearGradient>
-                </defs>
-                <circle class="ring-bg" cx="80" cy="80" r="70"/>
-                <circle class="ring-fill" cx="80" cy="80" r="70"/>
-            </svg>
-            <div class="ring-center">
-                <div class="ring-pct">{pct:.0f}%</div>
-                <div class="ring-label">مصرف‌شده</div>
+        <!-- حجم مصرفی -->
+        <div class="usage-inner-box">
+            <div class="usage-inner-head">
+                <span class="usage-inner-title">حجم مصرفی</span>
+                <span class="usage-inner-icon">🧊</span>
+            </div>
+            <div class="usage-inner-val">
+                <span class="usage-num">{_fmt_bytes(used) if used > 0 else '0 MB'}</span>
+                <span class="usage-sep">/</span>
+                <span class="usage-lim">{_fmt_bytes(limit) if limit > 0 else 'نامحدود'}</span>
+            </div>
+            <div class="usage-bar">
+                <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%"></div>
+            </div>
+            <div class="usage-inner-foot">
+                <span>{rem_str if limit > 0 else 'نامحدود'}</span>
+                <span>{_fmt_bytes(limit) if limit > 0 else 'نامحدود'}</span>
             </div>
         </div>
 
-        <div class="usage-nums">
-            {_fmt_bytes(used)} <span>/ {_fmt_bytes(limit) if limit > 0 else '∞'}</span>
-        </div>
-        <div class="usage-sub">{rem_str} باقی‌مانده</div>
-
-        <div class="info-row">
-            <div class="info-box">
-                <div class="info-box-label">وضعیت</div>
-                <div class="info-box-val {'green' if is_active else 'red'}">{status_text}</div>
+        <!-- زمان باقی‌مانده -->
+        <div class="usage-inner-box">
+            <div class="usage-inner-head">
+                <span class="usage-inner-title">زمان باقی‌مانده</span>
+                <span class="usage-inner-icon">⏰</span>
             </div>
-            <div class="info-box">
-                <div class="info-box-label">انقضا</div>
-                <div class="info-box-val gold">{expiry_str}</div>
-                <div class="info-box-sub">{expiry_date_str}</div>
+            <div class="usage-inner-val">
+                <span class="usage-num">{expiry_str if expiry_str != '∞' else 'نامحدود'}</span>
+            </div>
+            <div class="usage-bar">
+                <div class="usage-bar-fill usage-bar-time" style="width:{_expiry_pct(secs_left):.1f}%"></div>
+            </div>
+            <div class="usage-inner-foot">
+                <span>{expiry_date_str if expiry_date_str else 'نامحدود'}</span>
+                <span>{'منقضی شده' if secs_left == 0 else ('نامحدود' if secs_left is None else 'فعال')}</span>
             </div>
         </div>
     </div>
-
+    
     <!-- QR Code Card -->
     <div class="qr-card">
         <div class="qr-label">اسکن کنید برای افزودن</div>
