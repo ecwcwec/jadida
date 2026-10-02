@@ -2541,8 +2541,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
       border-radius:5px;overflow:hidden;margin-bottom:10px}}
     .usage-bar-fill{{
       height:100%;border-radius:5px;
-      transition:width .6s ease,background .4s ease,filter .4s ease;
-      filter:drop-shadow(0 0 4px currentColor)}}
+      transition:width .6s ease,background .4s ease}}
     .usage-bar-time{{
       background:linear-gradient(90deg,#a855f7,#c084fc);
       color:#a855f7}}
