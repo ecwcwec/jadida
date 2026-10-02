@@ -5859,7 +5859,7 @@ async function loadStats(){
     const svUp=$m('sv-uptime');if(svUp)svUp.textContent=sData.uptime||'-';
     const svOnline=$m('sv-online');if(svOnline)svOnline.textContent=sData.online_users||0;
     const nb=$m('nb');if(nb)nb.textContent=sData.links_count||0;
-    const lu=$m('last-upd');if(lu)lu.textContent='Updated '+new Date().toLocaleTimeString();
+    const lu=$m('last-up');if(lu)lu.textContent='Updated '+new Date().toLocaleTimeString();
     if($m('t-tr'))$m('t-tr').textContent=(sData.total_traffic_mb||0)+' MB';
     if($m('t-rq'))$m('t-rq').textContent=(sData.total_requests||0).toLocaleString();
     if($m('t-up'))$m('t-up').textContent=sData.uptime||'-';
