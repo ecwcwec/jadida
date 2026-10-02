@@ -2504,6 +2504,12 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
             box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06)}}
         .ring-wrap{{position:relative;width:160px;height:160px;margin:0 auto 20px}}
+        .usage-bar-wrap{margin-bottom:18px}
+.usage-bar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.usage-bar-label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em}
+.usage-bar-pct{font-size:13px;font-weight:800;color:var(--text)}
+.usage-bar-bg{height:8px;border-radius:5px;background:rgba(96,165,250,.12);overflow:hidden;position:relative}
+.usage-bar-fill{height:100%;border-radius:5px;transition:width 0.6s ease;box-shadow:0 0 10px rgba(59,130,246,.4)}
         .ring-svg{{width:160px;height:160px;transform:rotate(-90deg)}}
         .ring-bg{{fill:none;stroke:rgba(59,130,246,0.08);stroke-width:10}}
         .ring-fill{{fill:none;stroke-width:10;stroke-linecap:round;
@@ -2665,40 +2671,20 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 
     <!-- Usage Ring Card -->
     <div class="ring-card">
-        <div class="ring-wrap">
-            <svg class="ring-svg" viewBox="0 0 160 160">
-                <defs>
-                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style="stop-color:{ring_color1}"/>
-                        <stop offset="100%" style="stop-color:{ring_color2}"/>
-                    </linearGradient>
-                </defs>
-                <circle class="ring-bg" cx="80" cy="80" r="70"/>
-                <circle class="ring-fill" cx="80" cy="80" r="70"/>
-            </svg>
-            <div class="ring-center">
-                <div class="ring-pct">{pct:.0f}%</div>
-                <div class="ring-label">مصرف‌شده</div>
-            </div>
-        </div>
-
+<div class="usage-bar-wrap">
+  <div class="usage-bar-head">
+    <span class="usage-bar-label">مصرف‌شده</span>
+    <span class="usage-bar-pct">{pct:.1f}%</span>
+  </div>
+  <div class="usage-bar-bg">
+    <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{ring_color1},{ring_color2})"></div>
+  </div>
+</div>
         <div class="usage-nums">
             {_fmt_bytes(used)} <span>/ {_fmt_bytes(limit) if limit > 0 else '∞'}</span>
         </div>
         <div class="usage-sub">{rem_str} باقی‌مانده</div>
 
-        <div class="info-row">
-            <div class="info-box">
-                <div class="info-box-label">وضعیت</div>
-                <div class="info-box-val {'green' if is_active else 'red'}">{status_text}</div>
-            </div>
-            <div class="info-box">
-                <div class="info-box-label">انقضا</div>
-                <div class="info-box-val gold">{expiry_str}</div>
-                <div class="info-box-sub">{expiry_date_str}</div>
-            </div>
-        </div>
-    </div>
 
     <!-- QR Code Card -->
     <div class="qr-card">
