@@ -2372,6 +2372,36 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
                 configs.append(line)
     # Sub URL for QR
     sub_url = f"https://{get_domain()}/sub/{uid}"
+        # ── استخراج پرچم‌های یکتا از label کانفیگ‌ها ──
+    seen_flags = set()
+    flags_list = []
+    for cfg in configs:
+        if "#" not in cfg:
+            continue
+        remark = cfg.split("#", 1)[1]
+        try:
+            from urllib.parse import unquote
+            remark = unquote(remark)
+        except Exception:
+            pass
+        # چک کن با یه پرچم شروع می‌شه (ایموجی کشور)
+        if len(remark) >= 2:
+            first_two = remark[:2]
+            # اگر دو کاراکتر اول، ایموجی کشور بودن (regional indicators)
+            if all(0x1F1E6 <= ord(c) <= 0x1F1FF for c in first_two):
+                code = "".join(chr(ord(c) - 0x1F1E6 + 65) for c in first_two).lower()
+                if code not in seen_flags:
+                    seen_flags.add(code)
+                    flags_list.append(code)
+
+    if flags_list:
+        flags_html = "".join(
+            f'<img src="https://flagcdn.com/w80/{c}.png" alt="{c}" loading="lazy">'
+            for c in flags_list
+        )
+    else:
+        flags_html = '<div style="font-size:11px;color:var(--text3)">هیچ کشوری یافت نشد</div>'
+
     configs_json = json.dumps(configs)
 
     is_active = link["active"]
@@ -2793,7 +2823,9 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
     <!-- Flags Box -->
     <div class="flags-box">
         <div class="flags-box-title">کشورهای موجود</div>
-        <div class="flags-row" id="flags-row"></div>
+        <div class="flags-row">
+            {flags_html}
+        </div>
         <button class="flags-copy-btn" onclick="copyAllConfigs()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
             کپی کردن همه کانفیگ‌ها
@@ -3096,6 +3128,15 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         showToast('Ping test complete');
     }}
 
+    function copyAllConfigs() {{
+        if (!configs.length) {{
+            showToast('هیچ کانفیگی موجود نیست');
+            return;
+        }}
+        safeCopy(configs.join('\\n'));
+        showToast('همه کانفیگ‌ها کپی شدند (' + configs.length + ' کانفیگ)');
+    }}
+
     function showToast(msg) {{
         const t = document.getElementById('toast');
         t.textContent = msg;
@@ -3104,13 +3145,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         t._t = setTimeout(() => t.className = 'toast', 2500);
     }}
 
-    // ── استخراج پرچم‌ها از label کانفیگ‌ها و نمایش به‌صورت PNG ──
-    function flagEmojiToCode(emoji) {{
-        if (!emoji) return null;
-        const points = [...emoji].map(c => c.codePointAt(0));
-        if (points.length !== 2) return null;
-        return points.map(p => String.fromCharCode(p - 0x1F1E6 + 65)).join('').toLowerCase();
-    }}
 
     function renderFlags() {{
         const row = document.getElementById('flags-row');
