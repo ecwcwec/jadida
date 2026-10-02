@@ -2509,47 +2509,47 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         .header-sub{{font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase}}
 
     /* Usage card (new) */
-    .ring-card{
+    .ring-card{{
       background:rgba(15,30,55,0.5);border:1px solid rgba(96,165,250,0.22);border-radius:20px;
       padding:20px 18px;margin-bottom:14px;
       backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
       box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06);
-      display:flex;flex-direction:column;gap:12px}
-    .usage-inner-box{
+      display:flex;flex-direction:column;gap:12px}}
+    .usage-inner-box{{
       background:rgba(15,25,45,0.55);border:1px solid rgba(96,165,250,0.15);
       border-radius:14px;padding:14px 16px;
-      transition:border-color .2s,background .2s}
-    .usage-inner-box:hover{
-      border-color:rgba(96,165,250,0.35);background:rgba(20,35,60,0.6)}
-    .usage-inner-head{
+      transition:border-color .2s,background .2s}}
+    .usage-inner-box:hover{{
+      border-color:rgba(96,165,250,0.35);background:rgba(20,35,60,0.6)}}
+    .usage-inner-head{{
       display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:10px}
-    .usage-inner-title{
-      font-size:12px;font-weight:700;color:rgba(147,197,253,0.9);letter-spacing:.3px}
-    .usage-inner-icon{font-size:16px;opacity:.9}
-    .usage-inner-val{
+      margin-bottom:10px}}
+    .usage-inner-title{{
+      font-size:12px;font-weight:700;color:rgba(147,197,253,0.9);letter-spacing:.3px}}
+    .usage-inner-icon{{font-size:16px;opacity:.9}}
+    .usage-inner-val{{
       display:flex;align-items:baseline;gap:6px;
-      margin-bottom:10px;min-height:24px}
-    .usage-num{
-      font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px}
-    .usage-sep{
-      font-size:14px;color:rgba(255,255,255,0.35);font-weight:400}
-    .usage-lim{
-      font-size:14px;color:rgba(147,197,253,0.85);font-weight:600}
-    .usage-bar{
+      margin-bottom:10px;min-height:24px}}
+    .usage-num{{
+      font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px}}
+    .usage-sep{{
+      font-size:14px;color:rgba(255,255,255,0.35);font-weight:400}}
+    .usage-lim{{
+      font-size:14px;color:rgba(147,197,253,0.85);font-weight:600}}
+    .usage-bar{{
       height:8px;background:rgba(96,165,250,0.12);
-      border-radius:4px;overflow:hidden;margin-bottom:8px}
-    .usage-bar-fill{
+      border-radius:4px;overflow:hidden;margin-bottom:8px}}
+    .usage-bar-fill{{
       height:100%;border-radius:4px;
       background:linear-gradient(90deg,#3b82f6,#60a5fa);
       box-shadow:0 0 10px rgba(59,130,246,0.55);
-      transition:width .6s ease}
-    .usage-bar-time{
+      transition:width .6s ease}}
+    .usage-bar-time{{
       background:linear-gradient(90deg,#8b5cf6,#a78bfa);
-      box-shadow:0 0 10px rgba(139,92,246,0.55)}
-    .usage-inner-foot{
+      box-shadow:0 0 10px rgba(139,92,246,0.55)}}
+    .usage-inner-foot{{
       display:flex;align-items:center;justify-content:space-between;
-      font-size:10.5px;color:rgba(255,255,255,0.45);font-weight:500}
+      font-size:10.5px;color:rgba(255,255,255,0.45);font-weight:500}}
       
         /* QR card */
         .qr-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
