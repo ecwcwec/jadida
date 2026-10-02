@@ -2538,13 +2538,16 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
       font-size:14px;color:rgba(147,197,253,0.85);font-weight:600}}
     .usage-bar{{
       height:10px;background:rgba(96,165,250,0.12);
-      border-radius:5px;overflow:hidden;margin-bottom:10px}}
+      border-radius:5px;overflow:visible;margin-bottom:10px;
+      position:relative}}
     .usage-bar-fill{{
-      height:100%;border-radius:4px;
-      transition:width .6s ease,background .4s ease,box-shadow .4s ease}}
+      height:100%;border-radius:5px;
+      transition:width .6s ease,background .4s ease,filter .4s ease;
+      filter:drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor);
+      position:relative}}
     .usage-bar-time{{
       background:linear-gradient(90deg,#a855f7,#c084fc);
-      box-shadow:0 0 6px #a855f7,0 0 14px #a855f7,0 0 28px #a855f7,0 0 50px #a855f7bb,0 0 80px #a855f766}}
+      color:#a855f7}}
     .usage-inner-foot{{
       display:flex;align-items:center;justify-content:space-between;
       font-size:10.5px;color:rgba(255,255,255,0.45);font-weight:500}}
@@ -2697,7 +2700,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
                 <span class="usage-lim">{_fmt_bytes(limit) if limit > 0 else 'نامحدود'}</span>
             </div>
             <div class="usage-bar">
-                <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{'#22c55e,#4ade80' if pct < 70 else ('#facc15,#fde047' if pct < 90 else '#ef4444,#f87171')});box-shadow:0 0 6px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')},0 0 14px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')},0 0 28px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')},0 0 50px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}bb,0 0 80px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}66"></div>
+                <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{'#22c55e,#4ade80' if pct < 70 else ('#facc15,#fde047' if pct < 90 else '#ef4444,#f87171')});color:{'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}"></div>
             </div>
             <div class="usage-inner-foot">
                 <span>{rem_str if limit > 0 else 'نامحدود'}</span>
