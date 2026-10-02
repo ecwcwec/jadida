@@ -1657,10 +1657,21 @@ async def telegram_notifier_cron():
             
         await asyncio.sleep(60)
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return Response(content="OK", media_type="text/plain")
-
+    return HTMLResponse(content='''<!DOCTYPE html>
+<html>
+<head>
+<title>エムエディー</title>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:#000 url('/client/jet_website_under_1mb.jpg') no-repeat center center;background-size:cover}
+</style>
+</head>
+<body></body>
+</html>''')
 @app.get("/health")
 async def health():
     async with connections_lock:
