@@ -2691,7 +2691,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         <div class="usage-inner-box">
             <div class="usage-inner-head">
                 <span class="usage-inner-title">حجم مصرفی</span>
-                <span class="usage-inner-icon">🧊</span>
+
             </div>
             <div class="usage-inner-val">
                 <span class="usage-num">{_fmt_bytes(used) if used > 0 else '0 MB'}</span>
@@ -2711,7 +2711,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         <div class="usage-inner-box">
             <div class="usage-inner-head">
                 <span class="usage-inner-title">زمان باقی‌مانده</span>
-                <span class="usage-inner-icon">⏰</span>
+
             </div>
             <div class="usage-inner-val">
                 <span class="usage-num">{expiry_str if expiry_str != '∞' else 'نامحدود'}</span>
