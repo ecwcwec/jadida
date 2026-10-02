@@ -2544,7 +2544,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
       transition:width .6s ease,background .4s ease,box-shadow .4s ease}}
     .usage-bar-time{{
       background:linear-gradient(90deg,#a855f7,#c084fc);
-      box-shadow:0 0 10px #a855f788,0 0 20px #a855f744}}
+      box-shadow:0 0 4px #a855f7,0 0 10px #a855f7,0 0 20px #a855f799,0 0 35px #a855f755}}
     .usage-inner-foot{{
       display:flex;align-items:center;justify-content:space-between;
       font-size:10.5px;color:rgba(255,255,255,0.45);font-weight:500}}
@@ -2697,7 +2697,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
                 <span class="usage-lim">{_fmt_bytes(limit) if limit > 0 else 'نامحدود'}</span>
             </div>
             <div class="usage-bar">
-                <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{'#22c55e,#4ade80' if pct < 70 else ('#facc15,#fde047' if pct < 90 else '#ef4444,#f87171')});box-shadow:0 0 10px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}88, 0 0 20px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}44"></div>
+                <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{'#22c55e,#4ade80' if pct < 70 else ('#facc15,#fde047' if pct < 90 else '#ef4444,#f87171')});box-shadow:0 0 4px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')},0 0 10px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')},0 0 20px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}99,0 0 35px {'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}55"></div>
             </div>
             <div class="usage-inner-foot">
                 <span>{rem_str if limit > 0 else 'نامحدود'}</span>
