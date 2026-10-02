@@ -2677,7 +2677,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
     <span class="usage-bar-pct">{pct:.1f}%</span>
   </div>
   <div class="usage-bar-bg">
-    <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{ring_color1},{ring_color2})"></div>
+    <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%"></div>
   </div>
 </div>
         <div class="usage-nums">
