@@ -2724,19 +2724,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         </div>
     </div>
     
-    <!-- QR Code Card -->
-    <div class="qr-card">
-        <div class="qr-label">اسکن کنید برای افزودن</div>
-        <div class="qr-wrap">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=000000&bgcolor=ffffff&data={quote(sub_url)}" alt="QR">
-        </div>
-        <div class="qr-label">لینک اشتراک</div>
-        <div class="sub-link-display" onclick="copySub()">{get_domain()}/sub/{uid}</div>
-        <button class="copy-sub-btn" onclick="copySub()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            کپی لینک اشتراک
-        </button>
-    </div>
+
 
     <!-- Easy Import Section -->
     <div class="section-label">نصب برنامه</div>
