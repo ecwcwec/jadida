@@ -2509,7 +2509,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 .usage-bar-label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em}
 .usage-bar-pct{font-size:13px;font-weight:800;color:var(--text)}
 .usage-bar-bg{height:8px;border-radius:5px;background:rgba(96,165,250,.12);overflow:hidden;position:relative}
-.usage-bar-fill{height:100%;border-radius:5px;transition:width 0.6s ease;box-shadow:0 0 10px rgba(59,130,246,.4)}
+.usage-bar-fill{height:100%;border-radius:5px;transition:width 0.6s ease;background:linear-gradient(90deg,#3b82f6,#60a5fa);box-shadow:0 0 10px rgba(59,130,246,.4)}
         .ring-svg{{width:160px;height:160px;transform:rotate(-90deg)}}
         .ring-bg{{fill:none;stroke:rgba(59,130,246,0.08);stroke-width:10}}
         .ring-fill{{fill:none;stroke-width:10;stroke-linecap:round;
