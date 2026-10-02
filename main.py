@@ -2538,13 +2538,11 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
       font-size:14px;color:rgba(147,197,253,0.85);font-weight:600}}
     .usage-bar{{
       height:10px;background:rgba(96,165,250,0.12);
-      border-radius:5px;overflow:visible;margin-bottom:10px;
-      position:relative}}
+      border-radius:5px;overflow:hidden;margin-bottom:10px}}
     .usage-bar-fill{{
       height:100%;border-radius:5px;
       transition:width .6s ease,background .4s ease,filter .4s ease;
-      filter:drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor);
-      position:relative}}
+      filter:drop-shadow(0 0 4px currentColor)}}
     .usage-bar-time{{
       background:linear-gradient(90deg,#a855f7,#c084fc);
       color:#a855f7}}
