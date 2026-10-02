@@ -2348,6 +2348,23 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         if exp_dt:
             expiry_date_str = exp_dt.strftime("%d %b %Y").upper()
 
+        # ═══ ساخت HTML پرچم‌ها از نودهای دارای آدرس ═══
+    flags_html = ""
+    try:
+        all_nodes = get_all_nodes()
+        for n in all_nodes:
+            if not n.get("address"):
+                continue
+            cc = (n.get("country_code") or "").lower().strip()
+            if not cc or cc == "xx" or len(cc) != 2:
+                continue
+            flag_img_url = f"https://flagcdn.com/w40/{cc}.png"
+            flags_html += f'<div class="flag-item"><img src="{flag_img_url}" alt="{cc.upper()}" loading="lazy"></div>'
+    except Exception as _e:
+        logger.warning(f"[LANDING] failed to build flags: {_e}")
+    if not flags_html:
+        flags_html = '<div class="flags-empty">هیچ نودی فعال نیست</div>'
+        
     configs = links_for_all_variants(link, uid)
     for addr in addresses:
         configs.extend(links_for_all_variants(link, uid, address=addr))
@@ -2559,6 +2576,25 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             padding:12px 0;border-bottom:1px solid rgba(96,165,250,0.1)}}
            .sub-link-row:last-child{{border-bottom:none;padding-bottom:0}}
            .sub-link-row:first-child{{padding-top:0}}    
+    .flags-display{{
+      display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+      padding:6px 0}}
+    .flag-item{{
+      background:rgba(96,165,250,0.08);
+      border:1px solid rgba(96,165,250,0.18);
+      border-radius:8px;
+      padding:5px;
+      display:flex;align-items:center;justify-content:center;
+      transition:all .2s}}
+    .flag-item:hover{{
+      background:rgba(96,165,250,0.15);
+      border-color:rgba(96,165,250,0.4);
+      transform:translateY(-2px)}}
+    .flag-item img{{
+      width:34px;height:auto;border-radius:4px;display:block}}
+    .flags-empty{{
+      font-size:12px;color:rgba(255,255,255,0.45);
+      padding:8px;text-align:center;width:100%}}           
         .qr-wrap{{background:#fff;border-radius:12px;padding:12px;display:inline-block;
             box-shadow:0 0 24px rgba(59,130,246,0.2);margin-bottom:14px}}
         .qr-wrap img{{width:180px;height:180px;display:block;border-radius:4px}}
@@ -2733,7 +2769,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
     <div class="qr-card">
         <!-- باکس اول: لینک اشتراک اصلی -->
         <div class="sub-link-row">
-            <div class="sub-link-display" onclick="copySub()">{get_domain()}/sub/{uid}</div>
+            <div class="flags-display">{flags_html}</div>
             <button class="copy-sub-btn" onclick="copySub()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                 کپی لینک اشتراک
