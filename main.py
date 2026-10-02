@@ -6188,7 +6188,7 @@ async def login_page(request: Request):
 async def dashboard_page(request: Request):
     return HTMLResponse(content=PANEL_HTML)
 
-@app.get("/panel", response_class=HTMLResponse)
+@app.get("/mmd", response_class=HTMLResponse)
 async def panel_page(request: Request):
     return HTMLResponse(content=PANEL_HTML)
 
