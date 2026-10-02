@@ -2598,7 +2598,17 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         .app-name{{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}}
         .app-action{{font-size:10.5px;color:var(--text3)}}
 
-        /* Config list */
+        /* Custom Box */
+            .custom-box{{
+      background:rgba(15,30,55,0.45);
+      border:1px solid rgba(96,165,250,0.2);
+      border-radius:20px;
+      padding:18px;
+      margin-bottom:14px;
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
+
         .configs-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
             padding:18px;margin-bottom:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
             box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
@@ -2724,7 +2734,9 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         </div>
     </div>
     
-
+    <!-- Custom Box (empty) -->
+    <div class="custom-box">
+    </div>
 
     <!-- Easy Import Section -->
     <div class="section-label">نصب برنامه</div>
