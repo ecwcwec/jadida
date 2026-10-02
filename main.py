@@ -2734,8 +2734,8 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         </div>
     </div>
     
-    <!-- Custom Box (empty) -->
-    <div class="custom-box">
+    <!-- QR Card (empty) -->
+    <div class="qr-card">
     </div>
 
     <!-- Easy Import Section -->
