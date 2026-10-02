@@ -2308,16 +2308,6 @@ def _fmt_bytes(b: int) -> str:
     if b >= 1_048_576: return f"{b / 1_048_576:.1f}MB"
     return f"{b / 1024:.1f}KB"
 
-def _expiry_pct(secs_left, total_days=30):
-    """درصد زمان باقی‌مانده برای پر کردن نوار زمان."""
-    if secs_left is None:
-        return 100.0
-    if secs_left <= 0:
-        return 0.0
-    total_secs = total_days * 86400
-    return min((secs_left / total_secs) * 100, 100.0)
-
-
 async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> str:
     used = link["used_bytes"]
     limit = link["limit_bytes"]
@@ -2372,36 +2362,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
                 configs.append(line)
     # Sub URL for QR
     sub_url = f"https://{get_domain()}/sub/{uid}"
-        # ── استخراج پرچم‌های یکتا از label کانفیگ‌ها ──
-    seen_flags = set()
-    flags_list = []
-    for cfg in configs:
-        if "#" not in cfg:
-            continue
-        remark = cfg.split("#", 1)[1]
-        try:
-            from urllib.parse import unquote
-            remark = unquote(remark)
-        except Exception:
-            pass
-        # چک کن با یه پرچم شروع می‌شه (ایموجی کشور)
-        if len(remark) >= 2:
-            first_two = remark[:2]
-            # اگر دو کاراکتر اول، ایموجی کشور بودن (regional indicators)
-            if all(0x1F1E6 <= ord(c) <= 0x1F1FF for c in first_two):
-                code = "".join(chr(ord(c) - 0x1F1E6 + 65) for c in first_two).lower()
-                if code not in seen_flags:
-                    seen_flags.add(code)
-                    flags_list.append(code)
-
-    if flags_list:
-        flags_html = "".join(
-            f'<img src="https://flagcdn.com/w80/{c}.png" alt="{c}" loading="lazy">'
-            for c in flags_list
-        )
-    else:
-        flags_html = '<div style="font-size:11px;color:var(--text3)">هیچ کشوری یافت نشد</div>'
-
     configs_json = json.dumps(configs)
 
     is_active = link["active"]
@@ -2538,47 +2498,37 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
         .header-sub{{font-size:11px;color:var(--text3);letter-spacing:2px;text-transform:uppercase}}
 
-    /* Usage card (new) */
-    .ring-card{{
-      background:rgba(15,30,55,0.5);border:1px solid rgba(96,165,250,0.22);border-radius:20px;
-      padding:20px 18px;margin-bottom:14px;
-      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-      box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06);
-      display:flex;flex-direction:column;gap:12px}}
-    .usage-inner-box{{
-      background:rgba(15,25,45,0.55);border:1px solid rgba(96,165,250,0.15);
-      border-radius:14px;padding:14px 16px;
-      transition:border-color .2s,background .2s}}
-    .usage-inner-box:hover{{
-      border-color:rgba(96,165,250,0.35);background:rgba(20,35,60,0.6)}}
-    .usage-inner-head{{
-      display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:10px}}
-    .usage-inner-title{{
-      font-size:12px;font-weight:700;color:rgba(147,197,253,0.9);letter-spacing:.3px}}
-    .usage-inner-icon{{font-size:16px;opacity:.9}}
-    .usage-inner-val{{
-      display:flex;align-items:baseline;gap:6px;
-      margin-bottom:10px;min-height:24px}}
-    .usage-num{{
-      font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px}}
-    .usage-sep{{
-      font-size:14px;color:rgba(255,255,255,0.35);font-weight:400}}
-    .usage-lim{{
-      font-size:14px;color:rgba(147,197,253,0.85);font-weight:600}}
-    .usage-bar{{
-      height:10px;background:rgba(96,165,250,0.12);
-      border-radius:5px;overflow:hidden;margin-bottom:10px}}
-    .usage-bar-fill{{
-      height:100%;border-radius:5px;
-      transition:width .6s ease,background .4s ease}}
-    .usage-bar-time{{
-      background:linear-gradient(90deg,#a855f7,#c084fc);
-      color:#a855f7}}
-    .usage-inner-foot{{
-      display:flex;align-items:center;justify-content:space-between;
-      font-size:10.5px;color:rgba(255,255,255,0.45);font-weight:500}}
-      
+        /* Usage ring card */
+        .ring-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
+            padding:28px 24px;margin-bottom:14px;text-align:center;
+            backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+            box-shadow:0 8px 32px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.06)}}
+        .ring-wrap{{position:relative;width:160px;height:160px;margin:0 auto 20px}}
+        .ring-svg{{width:160px;height:160px;transform:rotate(-90deg)}}
+        .ring-bg{{fill:none;stroke:rgba(59,130,246,0.08);stroke-width:10}}
+        .ring-fill{{fill:none;stroke-width:10;stroke-linecap:round;
+            stroke-dasharray:440;stroke-dashoffset:{440 - (440 * min(pct,100)/100):.1f};
+            stroke:url(#ringGrad);filter:drop-shadow(0 0 8px {ring_color1});
+            transition:stroke-dashoffset 1s ease}}
+        .ring-center{{position:absolute;inset:0;display:flex;flex-direction:column;
+            align-items:center;justify-content:center}}
+        .ring-pct{{font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px}}
+        .ring-label{{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}}
+
+        .usage-nums{{font-size:20px;font-weight:700;margin-bottom:4px}}
+        .usage-nums span{{color:var(--text3);font-size:14px;font-weight:400}}
+        .usage-sub{{font-size:11px;color:var(--text3)}}
+
+        .info-row{{display:flex;gap:12px;margin-top:18px}}
+        .info-box{{flex:1;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.1);
+            border-radius:10px;padding:10px 12px;text-align:left}}
+        .info-box-label{{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}}
+        .info-box-val{{font-size:13px;font-weight:700}}
+        .info-box-val.green{{color:var(--green)}}
+        .info-box-val.red{{color:var(--red)}}
+        .info-box-val.gold{{color:var(--gold)}}
+        .info-box-sub{{font-size:10px;color:var(--text3);margin-top:1px}}
+
         /* QR card */
         .qr-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
             padding:24px;margin-bottom:14px;text-align:center;
@@ -2628,62 +2578,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         .app-name{{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}}
         .app-action{{font-size:10.5px;color:var(--text3)}}
 
-    .flags-box{{
-      background:rgba(15,30,55,0.45);
-      border:1px solid rgba(96,165,250,0.2);
-      border-radius:20px;
-      padding:18px;
-      margin-bottom:14px;
-      backdrop-filter:blur(20px);
-      -webkit-backdrop-filter:blur(20px);
-      box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
-    .flags-box-title{{
-      font-size:12px;
-      font-weight:700;
-      color:var(--text);
-      letter-spacing:.5px;
-      margin-bottom:12px}}
-    .flags-row{{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:14px}}
-    .flags-row img{{
-      width:42px;
-      height:28px;
-      object-fit:cover;
-      border-radius:6px;
-      border:1px solid rgba(96,165,250,0.25);
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
-      transition:transform .2s,box-shadow .2s}}
-    .flags-row img:hover{{
-      transform:translateY(-2px) scale(1.05);
-      box-shadow:0 4px 14px rgba(59,130,246,0.4)}}
-    .flags-copy-btn{{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      width:100%;
-      padding:11px;
-      border-radius:10px;
-      border:none;
-      cursor:pointer;
-      font-family:inherit;
-      font-size:13px;
-      font-weight:700;
-      background:linear-gradient(135deg,#3b82f6,#60a5fa);
-      color:#fff;
-      box-shadow:0 0 20px rgba(59,130,246,0.3);
-      transition:all .2s}}
-    .flags-copy-btn:hover{{
-      filter:brightness(1.1);
-      box-shadow:0 0 30px rgba(59,130,246,0.5);
-      transform:translateY(-1px)}}
-    .flags-copy-btn:active{{
-      transform:translateY(0)}}
-
-
+        /* Config list */
         .configs-card{{background:rgba(15,30,55,0.45);border:1px solid rgba(96,165,250,0.2);border-radius:20px;
             padding:18px;margin-bottom:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
             box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
@@ -2768,47 +2663,56 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         <div class="header-sub">{link['label']} · وضعیت اتصال</div>
     </div>
 
-    <!-- Usage & Time Card -->
+    <!-- Usage Ring Card -->
     <div class="ring-card">
-        <!-- حجم مصرفی -->
-        <div class="usage-inner-box">
-            <div class="usage-inner-head">
-                <span class="usage-inner-title">حجم مصرفی</span>
-
-            </div>
-            <div class="usage-inner-val">
-                <span class="usage-num">{_fmt_bytes(used) if used > 0 else '0 MB'}</span>
-                <span class="usage-sep">/</span>
-                <span class="usage-lim">{_fmt_bytes(limit) if limit > 0 else 'نامحدود'}</span>
-            </div>
-            <div class="usage-bar">
-                <div class="usage-bar-fill" style="width:{min(pct, 100):.1f}%;background:linear-gradient(90deg,{'#22c55e,#4ade80' if pct < 70 else ('#facc15,#fde047' if pct < 90 else '#ef4444,#f87171')});color:{'#22c55e' if pct < 70 else ('#facc15' if pct < 90 else '#ef4444')}"></div>
-            </div>
-            <div class="usage-inner-foot">
-                <span>{rem_str if limit > 0 else 'نامحدود'}</span>
-                <span>{_fmt_bytes(limit) if limit > 0 else 'نامحدود'}</span>
+        <div class="ring-wrap">
+            <svg class="ring-svg" viewBox="0 0 160 160">
+                <defs>
+                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:{ring_color1}"/>
+                        <stop offset="100%" style="stop-color:{ring_color2}"/>
+                    </linearGradient>
+                </defs>
+                <circle class="ring-bg" cx="80" cy="80" r="70"/>
+                <circle class="ring-fill" cx="80" cy="80" r="70"/>
+            </svg>
+            <div class="ring-center">
+                <div class="ring-pct">{pct:.0f}%</div>
+                <div class="ring-label">مصرف‌شده</div>
             </div>
         </div>
 
-        <!-- زمان باقی‌مانده -->
-        <div class="usage-inner-box">
-            <div class="usage-inner-head">
-                <span class="usage-inner-title">زمان باقی‌مانده</span>
+        <div class="usage-nums">
+            {_fmt_bytes(used)} <span>/ {_fmt_bytes(limit) if limit > 0 else '∞'}</span>
+        </div>
+        <div class="usage-sub">{rem_str} باقی‌مانده</div>
 
+        <div class="info-row">
+            <div class="info-box">
+                <div class="info-box-label">وضعیت</div>
+                <div class="info-box-val {'green' if is_active else 'red'}">{status_text}</div>
             </div>
-            <div class="usage-inner-val">
-                <span class="usage-num">{expiry_str if expiry_str != '∞' else 'نامحدود'}</span>
-            </div>
-            <div class="usage-bar">
-                <div class="usage-bar-fill usage-bar-time" style="width:{_expiry_pct(secs_left):.1f}%"></div>
-            </div>
-            <div class="usage-inner-foot">
-                <span>{expiry_date_str if expiry_date_str else 'نامحدود'}</span>
-                <span>{'منقضی شده' if secs_left == 0 else ('نامحدود' if secs_left is None else 'فعال')}</span>
+            <div class="info-box">
+                <div class="info-box-label">انقضا</div>
+                <div class="info-box-val gold">{expiry_str}</div>
+                <div class="info-box-sub">{expiry_date_str}</div>
             </div>
         </div>
     </div>
-    
+
+    <!-- QR Code Card -->
+    <div class="qr-card">
+        <div class="qr-label">اسکن کنید برای افزودن</div>
+        <div class="qr-wrap">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=000000&bgcolor=ffffff&data={quote(sub_url)}" alt="QR">
+        </div>
+        <div class="qr-label">لینک اشتراک</div>
+        <div class="sub-link-display" onclick="copySub()">{get_domain()}/sub/{uid}</div>
+        <button class="copy-sub-btn" onclick="copySub()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            کپی لینک اشتراک
+        </button>
+    </div>
 
     <!-- Easy Import Section -->
     <div class="section-label">نصب برنامه</div>
@@ -2819,18 +2723,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 </div>
 
     <div id="apps-container" class="apps-grid"></div>
-
-    <!-- Flags Box -->
-    <div class="flags-box">
-        <div class="flags-box-title">کشورهای موجود</div>
-        <div class="flags-row">
-            {flags_html}
-        </div>
-        <button class="flags-copy-btn" onclick="copyAllConfigs()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            کپی کردن همه کانفیگ‌ها
-        </button>
-    </div>
 
     <!-- Configs -->
     <div class="configs-card">
@@ -3128,15 +3020,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         showToast('Ping test complete');
     }}
 
-    function copyAllConfigs() {{
-        if (!configs.length) {{
-            showToast('هیچ کانفیگی موجود نیست');
-            return;
-        }}
-        safeCopy(configs.join('\\n'));
-        showToast('همه کانفیگ‌ها کپی شدند (' + configs.length + ' کانفیگ)');
-    }}
-
     function showToast(msg) {{
         const t = document.getElementById('toast');
         t.textContent = msg;
@@ -3144,44 +3027,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         clearTimeout(t._t);
         t._t = setTimeout(() => t.className = 'toast', 2500);
     }}
-
-
-    function renderFlags() {{
-        const row = document.getElementById('flags-row');
-        if (!row) return;
-        const seen = new Set();
-        const codes = [];
-        configs.forEach(cfg => {{
-            const parts = cfg.split('#');
-            if (!parts[1]) return;
-            const remark = decodeURIComponent(parts[1]);
-            const m = remark.match(/^([\uD83C][\uDDE6-\uDDFF][\uD83C][\uDDE6-\uDDFF])/);
-            if (!m) return;
-            const code = flagEmojiToCode(m[1]);
-            if (code && !seen.has(code)) {{
-                seen.add(code);
-                codes.push(code);
-            }}
-        }});
-        if (!codes.length) {{
-            row.innerHTML = '<div style="font-size:11px;color:var(--text3)">هیچ کشوری یافت نشد</div>';
-            return;
-        }}
-        row.innerHTML = codes.map(code =>
-            `<img src="https://flagcdn.com/w80/${{code}}.png" alt="${{code}}" loading="lazy">`
-        ).join('');
-    }}
-
-    function copyAllConfigs() {{
-        if (!configs.length) {{
-            showToast('هیچ کانفیگی موجود نیست');
-            return;
-        }}
-        safeCopy(configs.join('\\n'));
-        showToast('همه کانفیگ‌ها کپی شدند (' + configs.length + ' کانفیگ)');
-    }}
-
-    renderFlags();
 
     renderConfigs();
 </script>
