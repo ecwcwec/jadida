@@ -4009,7 +4009,9 @@ body[dir="rtl"]{direction:rtl;text-align:right}
 .filter-chips{display:flex;gap:3px;padding:3px;background:var(--surface2);border:1px solid var(--border);border-radius:8px}
 .chip{padding:7px 12px;border-radius:6px;font-size:11.5px;font-weight:700;color:var(--text3);
   cursor:pointer;border:none;background:none;transition:all .18s;font-family:inherit}
-.chip.active{background:var(--gold);color:#fff}
+.chip.active{background:var(--accent);color:#fff}
+.chip.chip-active.active{background:var(--green);color:#fff}
+.chip.chip-inactive.active{background:var(--red);color:#fff}
 /* Desktop cards - shown on wide screens */
 .d-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:14px}
 .d-card{background:rgba(18,32,58,0.55);border:1px solid rgba(96,165,250,0.18);border-radius:18px;
