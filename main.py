@@ -2348,8 +2348,21 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         if exp_dt:
             expiry_date_str = exp_dt.strftime("%d %b %Y").upper()
 
-        # ═══ ساخت HTML پرچم‌ها از نودهای دارای آدرس ═══
+    # ═══ ساخت HTML پرچم‌ها (Master + Slave) ═══
     flags_html = ""
+    seen_codes = set()
+
+    # ۱) پرچم پنل Master (همیشه)
+    try:
+        master_cc = (CONFIG.get("panel_country") or "").lower().strip()
+        if master_cc and len(master_cc) == 2 and master_cc != "xx":
+            flag_img_url = f"https://flagcdn.com/w40/{master_cc}.png"
+            flags_html += f'<div class="flag-item" title="Master"><img src="{flag_img_url}" alt="{master_cc.upper()}" loading="lazy"></div>'
+            seen_codes.add(master_cc)
+    except Exception as _e:
+        logger.warning(f"[LANDING] failed to build master flag: {_e}")
+
+    # ۲) پرچم نودهای Slave (فقط اون‌هایی که آدرس دارن و تکراری نیستن)
     try:
         all_nodes = get_all_nodes()
         for n in all_nodes:
@@ -2358,12 +2371,16 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             cc = (n.get("country_code") or "").lower().strip()
             if not cc or cc == "xx" or len(cc) != 2:
                 continue
+            if cc in seen_codes:
+                continue
             flag_img_url = f"https://flagcdn.com/w40/{cc}.png"
             flags_html += f'<div class="flag-item"><img src="{flag_img_url}" alt="{cc.upper()}" loading="lazy"></div>'
+            seen_codes.add(cc)
     except Exception as _e:
-        logger.warning(f"[LANDING] failed to build flags: {_e}")
+        logger.warning(f"[LANDING] failed to build node flags: {_e}")
+
     if not flags_html:
-        flags_html = '<div class="flags-empty">هیچ نودی فعال نیست</div>'
+        flags_html = '<div class="flags-empty">پرچمی تنظیم نشده</div>'
         
     configs = links_for_all_variants(link, uid)
     for addr in addresses:
