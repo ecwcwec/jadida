@@ -2583,10 +2583,6 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
             padding:18px;margin-bottom:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
             box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.05)}}
         .configs-header{{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}}
-        .copy-all-btn{background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.2s;box-shadow:0 3px 10px rgba(59,130,246,.3)}
-        .copy-all-btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(59,130,246,.5)}
-        .copy-all-btn:active{transform:translateY(0) scale(.98)}
-        .copy-all-btn i{font-size:14px}
         .configs-title{{font-size:12px;font-weight:700;color:var(--text);letter-spacing:.5px}}
         .configs-count{{font-size:10px;color:var(--text3);background:var(--gold-dim);
             border:1px solid var(--border);border-radius:6px;padding:2px 8px}}
@@ -2730,13 +2726,12 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 
     <!-- Configs -->
     <div class="configs-card">
-<div class="configs-header">
-  <div class="configs-title">کانفیگ‌ها</div>
-  <button class="copy-all-btn" onclick="copyAllConfigs()" title="کپی همه کانفیگ‌ها">
-    <i class="ti ti-copy"></i>
-    <span>کپی همه</span>
-  </button>
-</div>
+        <div class="configs-header">
+            <div class="configs-title">کانفیگ‌ها</div>
+            <div class="configs-count" id="configs-count">0 configs</div>
+        </div>
+        <div id="config-list"></div>
+    </div>
 
 
 
@@ -2934,8 +2929,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
     // Render configs
     function renderConfigs() {{
         const list = document.getElementById('config-list');
-const cc = document.getElementById('configs-count');
-if(cc) cc.textContent = configs.length + ' کانفیگ';
+        document.getElementById('configs-count').textContent = configs.length + ' کانفیگ';
         list.innerHTML = configs.map((cfg, i) => {{
             const parts = cfg.split('#');
             const remark = parts[1] ? decodeURIComponent(parts[1]) : 'Config ' + (i+1);
@@ -2964,8 +2958,6 @@ if(cc) cc.textContent = configs.length + ' کانفیگ';
         safeCopy(txt);
         showToast('کانفیگ کپی شد!');
     }}
-    
-<div class="configs-count" id="configs-count">0 configs</div>
 
     function showQR(txt, name) {{
         document.getElementById('qr-modal-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(txt);
@@ -4018,8 +4010,6 @@ body[dir="rtl"]{direction:rtl;text-align:right}
 .chip{padding:7px 12px;border-radius:6px;font-size:11.5px;font-weight:700;color:var(--text3);
   cursor:pointer;border:none;background:none;transition:all .18s;font-family:inherit}
 .chip.active{background:var(--gold);color:#fff}
-.chip.chip-active.active{background:var(--green);color:#fff}
-.chip.chip-inactive.active{background:var(--red);color:#fff}
 /* Desktop cards - shown on wide screens */
 .d-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:14px}
 .d-card{background:rgba(18,32,58,0.55);border:1px solid rgba(96,165,250,0.18);border-radius:18px;
@@ -5869,7 +5859,28 @@ async function loadStats(){
     const svUp=$m('sv-uptime');if(svUp)svUp.textContent=sData.uptime||'-';
     const svOnline=$m('sv-online');if(svOnline)svOnline.textContent=sData.online_users||0;
     const nb=$m('nb');if(nb)nb.textContent=sData.links_count||0;
-    const lu=$m('last-up');if(lu)lu.textContent='Updated '+new Date().toLocaleTimeString();
+    
+// ═══════════════════════════════════════════════════════════
+// 🕐 ساعت و تاریخ زنده‌ی ایران
+// ═══════════════════════════════════════════════════════════
+function updateIranClock(){
+  const el = $m('last-upd');
+  if(!el) return;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fa-IR', {
+    timeZone: 'Asia/Tehran',
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('fa-IR', {
+    timeZone: 'Asia/Tehran',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  el.innerHTML = `<i class="ti ti-clock-hour-4" style="font-size:14px;vertical-align:-3px;margin-left:4px"></i>${dateStr} · <span style="color:var(--accent);font-weight:800">${timeStr}</span>`;
+}
+setInterval(updateIranClock, 1000);
+updateIranClock();
+
+//
     if($m('t-tr'))$m('t-tr').textContent=(sData.total_traffic_mb||0)+' MB';
     if($m('t-rq'))$m('t-rq').textContent=(sData.total_requests||0).toLocaleString();
     if($m('t-up'))$m('t-up').textContent=sData.uptime||'-';
