@@ -2965,19 +2965,7 @@ if(cc) cc.textContent = configs.length + ' کانفیگ';
         showToast('کانفیگ کپی شد!');
     }}
     
-function copyAllConfigs() {{
-  try {{
-    if (typeof configs === 'undefined' || !configs || !configs.length) {{
-      showToast('کانفیگی برای کپی نیست');
-      return;
-    }}
-    const allLinks = configs.join('\n');
-    safeCopy(allLinks);
-    showToast('همه‌ی ' + configs.length + ' کانفیگ کپی شد!');
-  }} catch (e) {{
-    showToast('خطا در کپی');
-  }}
-}}
+<div class="configs-count" id="configs-count">0 configs</div>
 
     function showQR(txt, name) {{
         document.getElementById('qr-modal-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + encodeURIComponent(txt);
