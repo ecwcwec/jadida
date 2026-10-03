@@ -3637,7 +3637,7 @@ async def check_and_add_usage(uid: str, extra_bytes: int) -> bool:
         if link["limit_bytes"] != 0:
             total_used = link["used_bytes"] + get_cached_node_usage(uid)
             if (total_used + extra_bytes) > link["limit_bytes"]:
-            return False
+                return False
         link["used_bytes"] += extra_bytes
         return True
 
