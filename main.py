@@ -1497,15 +1497,38 @@ def get_total_node_usage(uid: str) -> int:
 async def get_total_usage(uid: str) -> int:
     """جمع مصرف Master + همه Nodeها رو برمی‌گردونه.
     
-    از cache می‌خونه (سریع) — cache رو usage_cache_updater_loop آپدیت می‌کنه.
+    فوراً از cache جواب می‌ده + در پس‌زمینه cache رو refresh می‌کنه.
     """
     master_used = 0
     link = LINKS.get(uid)
     if link:
         master_used = int(link.get("used_bytes", 0))
     
-    # ⭐ از cache بخون (سریع)
+    # ⭐ اگه cache قدیمیه، در پس‌زمینه refresh کن (بدون بلاک کردن)
+    now = time.time()
+    cached = _node_usage_cache.get(uid)
+    if not cached or (now - cached[1]) >= _NODE_USAGE_CACHE_TTL:
+        try:
+            asyncio.create_task(_refresh_node_usage_cache(uid))
+        except Exception as e:
+            logger.debug(f"[USAGE] Failed to schedule cache refresh: {e}")
+    
     return master_used + get_cached_node_usage(uid)
+
+
+async def _refresh_node_usage_cache(uid: str):
+    """cache مصرف Node رو در پس‌زمینه آپدیت می‌کنه."""
+    try:
+        from nodes import fetch_all_nodes_usage
+        node_total = await asyncio.wait_for(fetch_all_nodes_usage(uid), timeout=10.0)
+        _node_usage_cache[uid] = (node_total, time.time())
+        logger.debug(f"[USAGE] Refreshed cache for {uid[:8]}: {node_total} bytes")
+    except asyncio.TimeoutError:
+        logger.warning(f"[USAGE] Refresh cache timed out for {uid[:8]}")
+    except Exception as e:
+        logger.warning(f"[USAGE] Refresh cache failed for {uid[:8]}: {e}")
+
+
 
 
 def invalidate_node_usage_cache(uid: str | None = None):
