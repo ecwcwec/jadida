@@ -1442,6 +1442,67 @@ def fmt_exp_py(ea: str | None) -> str:
     minutes = int(seconds // 60)
     return f"{minutes}m"
 
+    # ═══════════════════════════════════════════════════════════════════════
+# 🧊 Total Usage Cache (Master + Nodes)
+# ═══════════════════════════════════════════════════════════════════════
+_node_usage_cache: dict = {}  # {uid: (total_bytes, last_refresh_ts)}
+_NODE_USAGE_CACHE_TTL = 5  # ثانیه
+
+
+def get_total_node_usage(uid: str) -> int:
+    """جمع مصرف همه نودها برای این کاربر رو برمی‌گردونه (بدون Master)."""
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "SELECT COALESCE(SUM(used_bytes), 0) as total FROM node_usage WHERE uuid = ?",
+            (uid,)
+        )
+        row = cur.fetchone()
+        return int(row["total"] or 0) if row else 0
+    except Exception as e:
+        logger.warning(f"[USAGE] get_total_node_usage failed for {uid[:8]}: {e}")
+        return 0
+    finally:
+        conn.close()
+
+
+def get_total_usage(uid: str) -> int:
+    """جمع مصرف Master + همه Nodeها رو برمی‌گردونه (با cache ۵ ثانیه‌ای).
+
+    این تابع رو توی همه جاهایی که می‌خوایم مصرف کل کاربر رو بدونیم استفاده می‌کنیم.
+    """
+    now = time.time()
+
+    # cache hit
+    cached = _node_usage_cache.get(uid)
+    if cached and (now - cached[1]) < _NODE_USAGE_CACHE_TTL:
+        master_used = 0
+        # master_used هم از LINKS می‌خونیم که تازه باشه
+        link = LINKS.get(uid)
+        if link:
+            master_used = int(link.get("used_bytes", 0))
+        return master_used + cached[0]
+
+    # cache miss → دوباره محاسبه کن
+    node_total = get_total_node_usage(uid)
+    _node_usage_cache[uid] = (node_total, now)
+
+    master_used = 0
+    link = LINKS.get(uid)
+    if link:
+        master_used = int(link.get("used_bytes", 0))
+
+    return master_used + node_total
+
+
+def invalidate_node_usage_cache(uid: str | None = None):
+    """cache مصرف رو پاک کن. اگه uid بدی، فقط اون کاربر پاک می‌شه."""
+    if uid:
+        _node_usage_cache.pop(uid, None)
+    else:
+        _node_usage_cache.clear()
+
+
 async def get_internal_stats():
     async with connections_lock:
         conn_count = len(connections)
@@ -1621,9 +1682,12 @@ async def telegram_notifier_cron():
                 if not data["active"]:
                     continue
                 
-                used = data["used_bytes"]
+                master_used = data["used_bytes"]
                 limit = data["limit_bytes"]
                 label = data["label"]
+
+                # مصرف کل شامل نودها
+                used = master_used + get_cached_node_usage(uid)
                 
                 if limit > 0 and used >= limit:
                     notif_key = f"quota_{uid}"
@@ -2156,6 +2220,18 @@ async def delete_link(uid: str, _=Depends(require_auth)):
     await save_db()
     await close_connections_for_link(uid)
     
+    # ⭐ پاک کردن مصرف نودها از cache و DB
+    invalidate_node_usage_cache(uid)
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM node_usage WHERE uuid = ?", (uid,))
+        conn.commit()
+        logger.info(f"[CLEANUP] Deleted node_usage rows for {uid[:8]}")
+    except Exception as e:
+        logger.warning(f"[CLEANUP] Failed to delete node_usage for {uid[:8]}: {e}")
+    finally:
+        conn.close()
+    
     # ⭐ حذف کاربر از همه نودها
     asyncio.create_task(delete_user_from_all_nodes(uid))
     
@@ -2319,7 +2395,7 @@ def _expiry_pct(secs_left, total_days=30):
 
 
 async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> str:
-    used = link["used_bytes"]
+    used = get_total_usage(uid)
     limit = link["limit_bytes"]
     expires_at_str = link.get("expires_at")
 
@@ -3135,7 +3211,7 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
 
 
 def generate_subscription_content(link: dict, uid: str, addresses: list[str]) -> str:
-    used = link["used_bytes"]
+    used = get_total_usage(uid)
     limit = link["limit_bytes"]
     expires_at_str = link.get("expires_at")
     usage_str = f"{_fmt_bytes(used)} / ∞" if limit == 0 else f"{_fmt_bytes(used)} / {_fmt_bytes(limit)}"
@@ -3213,7 +3289,7 @@ def generate_singbox_config(link: dict, uid: str, addresses: list[str]) -> str:
 
 def generate_clash_config(link: dict, uid: str, addresses: list[str]) -> str:
     domain = get_domain()
-    used = link["used_bytes"]
+    used = get_total_usage(uid)
     limit = link["limit_bytes"]
     expires_at_str = link.get("expires_at")
     usage_str = f"{_fmt_bytes(used)} / ∞" if limit == 0 else f"{_fmt_bytes(used)} / {_fmt_bytes(limit)}"
@@ -3419,7 +3495,7 @@ async def subscription_endpoint(uid: str, request: Request):
             "Content-Type": "text/yaml; charset=utf-8",
             "Content-Disposition": 'attachment; filename="clash.yaml"',
             "profile-update-interval": "6",
-            "subscription-userinfo": f"upload={link['used_bytes']}; download=0; total={total_bytes}; expire={expire_ts}",
+            "subscription-userinfo": f"upload={get_total_usage(uid)}; download=0; total={total_bytes}; expire={expire_ts}",
         }
         return Response(content=clash_content, headers=headers)
 
@@ -3441,7 +3517,7 @@ async def subscription_endpoint(uid: str, request: Request):
         "Content-Type": "text/plain; charset=utf-8",
         "profile-update-interval": "6",
         "profile-title": "base64:" + base64.b64encode(f"エムエムディー-{link['label']}".encode()).decode(),
-        "subscription-userinfo": f"upload={link['used_bytes']}; download=0; total={total_bytes}; expire={expire_ts}",
+        "subscription-userinfo": f"upload={get_total_usage(uid)}; download=0; total={total_bytes}; expire={expire_ts}",
     }
 
     encoded = base64.b64encode(sub_content.encode()).decode()
@@ -3558,7 +3634,9 @@ async def check_and_add_usage(uid: str, extra_bytes: int) -> bool:
         expires_at = parse_expires_at(link.get("expires_at"))
         if expires_at is not None and expires_at < datetime.now(timezone.utc):
             return False
-        if link["limit_bytes"] != 0 and (link["used_bytes"] + extra_bytes) > link["limit_bytes"]:
+        if link["limit_bytes"] != 0:
+            total_used = link["used_bytes"] + get_cached_node_usage(uid)
+            if (total_used + extra_bytes) > link["limit_bytes"]:
             return False
         link["used_bytes"] += extra_bytes
         return True
@@ -6785,6 +6863,12 @@ async def api_node_report_usage(request: Request):
             """, (uid, node_slot, used, now))
             updated += 1
         conn.commit()
+                # cache مصرف رو invalidate کن چون نودها آپدیت شدن
+        for rep in reports:
+            rep_uid = rep.get("uuid")
+            if rep_uid:
+                invalidate_node_usage_cache(rep_uid)
+
         logger.info(f"[NODE] Received usage report from slot {node_slot}: {updated} users")
         return {"status": "ok", "updated": updated}
     finally:
