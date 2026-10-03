@@ -6141,11 +6141,52 @@ async function chgPw(){
 function initChart(){
   const ctx=$m('tc');
   if(!ctx||tChart)return;
-  tChart=new Chart(ctx,{
-    type:'bar',
-    data:{labels:[],datasets:[{label:'MB',data:[],backgroundColor:'rgba(251,191,36,0.85)',borderColor:'#fbbf24',borderWidth:1,borderRadius:8,borderSkipped:false}]},
+tChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:[],datasets:[{
+      label:'MB',
+      data:[],
+      borderColor:'#fbbf24',
+      backgroundColor:(context)=>{
+        const chart=context.chart;
+        const {ctx,chartArea}=chart;
+        if(!chartArea)return 'rgba(251,191,36,0.1)';
+        const gradient=ctx.createLinearGradient(0,chartArea.top,0,chartArea.bottom);
+        gradient.addColorStop(0,'rgba(251,191,36,0.55)');
+        gradient.addColorStop(0.5,'rgba(251,191,36,0.18)');
+        gradient.addColorStop(1,'rgba(251,191,36,0)');
+        return gradient;
+      },
+      borderWidth:2.5,
+      fill:true,
+      tension:0.4,
+      pointRadius:3,
+      pointHoverRadius:6,
+      pointBackgroundColor:'#fbbf24',
+      pointBorderColor:'#fff',
+      pointBorderWidth:1.5,
+      pointHoverBackgroundColor:'#fff',
+      pointHoverBorderColor:'#fbbf24',
+      pointHoverBorderWidth:2,
+    }]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(15,30,55,0.95)',
+          borderColor:'rgba(251,191,36,0.3)',
+          borderWidth:1,
+          titleColor:'#fff',
+          bodyColor:'#fbbf24',
+          padding:10,
+          cornerRadius:8,
+          displayColors:false,
+          callbacks:{
+            label:(ctx)=>ctx.parsed.y+' MB'
+          }
+        }
+      },
       scales:{
         x:{grid:{display:false},ticks:{color:'rgba(59,130,246,0.35)',font:{size:10}}},
         y:{grid:{color:'rgba(59,130,246,0.06)'},ticks:{color:'rgba(59,130,246,0.35)',font:{size:10},callback:v=>v+' MB'},beginAtZero:true}
