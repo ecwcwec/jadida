@@ -123,6 +123,23 @@ async def check_github_latest(force: bool = False) -> dict:
 
     return {"tag": new_tag, "url": new_url, "checked_at": now}
 
+async def usage_cache_updater_loop():
+    """هر ۳۰ ثانیه، مصرف همه کاربرا رو از نودها می‌گیره و cache رو آپدیت می‌کنه."""
+    await asyncio.sleep(20)  # تأخیر اولیه
+    while True:
+        try:
+            uids = list(LINKS.keys())
+            for uid in uids[:50]:  # حداکثر ۵۰ کاربر
+                try:
+                    from nodes import fetch_all_nodes_usage
+                    node_total = await asyncio.wait_for(fetch_all_nodes_usage(uid), timeout=10.0)
+                    _node_usage_cache[uid] = (node_total, time.time())
+                except Exception as e:
+                    logger.debug(f"[USAGE-CACHE] Failed to update cache for {uid[:8]}: {e}")
+        except Exception as e:
+            logger.error(f"[USAGE-CACHE] Loop error: {e}")
+        await asyncio.sleep(30)
+
 
 async def github_check_loop():
     """Background task: check GitHub every 60 seconds for new releases."""
@@ -982,6 +999,7 @@ async def startup():
     http_client = httpx.AsyncClient(limits=limits, timeout=timeout, follow_redirects=True)
     asyncio.create_task(keep_alive())
     asyncio.create_task(github_check_loop())
+    asyncio.create_task(usage_cache_updater_loop())
     asyncio.create_task(node_health_check_loop())
     asyncio.create_task(report_usage_to_master_loop())
     await restart_telegram_bot()
@@ -1466,32 +1484,28 @@ def get_total_node_usage(uid: str) -> int:
         conn.close()
 
 
-def get_total_usage(uid: str) -> int:
-    """جمع مصرف Master + همه Nodeها رو برمی‌گردونه (با cache ۵ ثانیه‌ای).
-
-    این تابع رو توی همه جاهایی که می‌خوایم مصرف کل کاربر رو بدونیم استفاده می‌کنیم.
+async def get_total_usage(uid: str) -> int:
+    """جمع مصرف Master + همه Nodeها رو برمی‌گردونه.
+    
+    مستقیم از نودها می‌پرسه (به‌جای انتظار برای گزارش).
     """
-    now = time.time()
-
-    # cache hit
-    cached = _node_usage_cache.get(uid)
-    if cached and (now - cached[1]) < _NODE_USAGE_CACHE_TTL:
-        master_used = 0
-        # master_used هم از LINKS می‌خونیم که تازه باشه
-        link = LINKS.get(uid)
-        if link:
-            master_used = int(link.get("used_bytes", 0))
-        return master_used + cached[0]
-
-    # cache miss → دوباره محاسبه کن
-    node_total = get_total_node_usage(uid)
-    _node_usage_cache[uid] = (node_total, now)
-
     master_used = 0
     link = LINKS.get(uid)
     if link:
         master_used = int(link.get("used_bytes", 0))
-
+    
+    # ⭐ مستقیم از نودها بپرس
+    node_total = 0
+    try:
+        from nodes import fetch_all_nodes_usage
+        node_total = await asyncio.wait_for(fetch_all_nodes_usage(uid), timeout=8.0)
+    except asyncio.TimeoutError:
+        logger.warning(f"[USAGE] fetch_all_nodes_usage timed out for {uid[:8]}")
+        node_total = get_cached_node_usage(uid)
+    except Exception as e:
+        logger.warning(f"[USAGE] fetch_all_nodes_usage failed for {uid[:8]}: {e}")
+        node_total = get_cached_node_usage(uid)
+    
     return master_used + node_total
 
 
@@ -2395,7 +2409,7 @@ def _expiry_pct(secs_left, total_days=30):
 
 
 async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> str:
-    used = get_total_usage(uid)
+    used = await get_total_usage(uid)
     limit = link["limit_bytes"]
     expires_at_str = link.get("expires_at")
 
@@ -3210,8 +3224,8 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
     return html
 
 
-def generate_subscription_content(link: dict, uid: str, addresses: list[str]) -> str:
-    used = get_total_usage(uid)
+async def generate_subscription_content(link: dict, uid: str, addresses: list[str]) -> str:
+    used = await get_total_usage(uid)
     limit = link["limit_bytes"]
     expires_at_str = link.get("expires_at")
     usage_str = f"{_fmt_bytes(used)} / ∞" if limit == 0 else f"{_fmt_bytes(used)} / {_fmt_bytes(limit)}"
@@ -3287,9 +3301,9 @@ def generate_singbox_config(link: dict, uid: str, addresses: list[str]) -> str:
     return json.dumps(config, ensure_ascii=False, indent=2)
 
 
-def generate_clash_config(link: dict, uid: str, addresses: list[str]) -> str:
+async def generate_clash_config(link: dict, uid: str, addresses: list[str]) -> str:
     domain = get_domain()
-    used = get_total_usage(uid)
+    used = await get_total_usage(uid)
     limit = link["limit_bytes"]
     expires_at_str = link.get("expires_at")
     usage_str = f"{_fmt_bytes(used)} / ∞" if limit == 0 else f"{_fmt_bytes(used)} / {_fmt_bytes(limit)}"
@@ -3490,17 +3504,17 @@ async def subscription_endpoint(uid: str, request: Request):
         expire_ts = int(expires_at.timestamp())
 
     if is_clash:
-        clash_content = generate_clash_config(link, uid, addresses)
+        clash_content = await generate_clash_config(link, uid, addresses)
         headers = {
             "Content-Type": "text/yaml; charset=utf-8",
             "Content-Disposition": 'attachment; filename="clash.yaml"',
             "profile-update-interval": "6",
-            "subscription-userinfo": f"upload={get_total_usage(uid)}; download=0; total={total_bytes}; expire={expire_ts}",
+            "subscription-userinfo": f"upload={await get_total_usage(uid)}; download=0; total={total_bytes}; expire={expire_ts}",
         }
         return Response(content=clash_content, headers=headers)
 
     # ⭐ کانفیگ مستر
-    sub_content = generate_subscription_content(link, uid, addresses)
+    sub_content = await generate_subscription_content(link, uid, addresses)
     
     # ⭐ کانفیگ‌های نودها (فقط online ها)
     for slot in range(1, MAX_NODES + 1):
@@ -3517,7 +3531,7 @@ async def subscription_endpoint(uid: str, request: Request):
         "Content-Type": "text/plain; charset=utf-8",
         "profile-update-interval": "6",
         "profile-title": "base64:" + base64.b64encode(f"エムエムディー-{link['label']}".encode()).decode(),
-        "subscription-userinfo": f"upload={get_total_usage(uid)}; download=0; total={total_bytes}; expire={expire_ts}",
+        "subscription-userinfo": f"upload={await get_total_usage(uid)}; download=0; total={total_bytes}; expire={expire_ts}",
     }
 
     encoded = base64.b64encode(sub_content.encode()).decode()
@@ -6781,6 +6795,24 @@ async def api_node_disable_user(request: Request):
     logger.info(f"[NODE] Disabled user {uid[:8]} by master request")
     return {"status": "ok", "uuid": uid}
  
+@app.get("/api/node/get-usage")
+async def api_node_get_usage(request: Request, uuid: str):
+    """مصرف یه کاربر رو برمی‌گردونه (برای Master).
+    
+    Master از Node می‌پرسه: مصرف کاربر X روی تو چقدره؟
+    Node جواب می‌ده.
+    """
+    token = request.headers.get("X-Node-Token", "")
+    my_token = CONFIG.get("my_api_token", "")
+    if not my_token or token != my_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    async with LINKS_LOCK:
+        link = LINKS.get(uuid)
+        if link is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"status": "ok", "used_bytes": int(link.get("used_bytes", 0))}
+
 
 @app.get("/api/node/get-config")
 async def api_node_get_config(request: Request, uuid: str):
