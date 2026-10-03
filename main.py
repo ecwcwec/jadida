@@ -2787,9 +2787,9 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
         <!-- باکس اول: لینک اشتراک اصلی -->
         <div class="sub-link-row">
             <div class="flags-display">{flags_html}</div>
-            <button class="copy-sub-btn" onclick="copySub()">
+            <button class="copy-sub-btn" onclick="copyAllConfigs()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                کپی لینک اشتراک
+                کپی همه کانفیگ‌ها
             </button>
         </div>
 
@@ -3036,6 +3036,16 @@ async def generate_landing_page(link: dict, uid: str, addresses: list[str]) -> s
                 </div>
             `;
         }}).join('');
+    }}
+
+    function copyAllConfigs() {{
+        if(!configs || configs.length === 0) {{
+            showToast('کانفیگی برای کپی وجود ندارد');
+            return;
+        }}
+        const allText = configs.join('\\n');
+        safeCopy(allText);
+        showToast(configs.length + ' کانفیگ کپی شد!');
     }}
 
     function copySub() {{
