@@ -325,6 +325,55 @@ async def test_node_connection(slot: int) -> dict:
         logger.warning(f"[NODE] Slot {slot} connection failed: {e}")
         return {"ok": False, "status": "offline", "message": str(e)}
 
+async def get_usage_from_node(slot: int, uid: str) -> int | None:
+    """از یه نود می‌پرسه مصرف این کاربر چقدره.
+    اگه نود آفلاین/خطا بود، None برمی‌گردونه."""
+    node = get_node_by_slot(slot)
+    if not node:
+        return None
+    
+    address = (node.get("address") or "").strip()
+    token = (node.get("api_token") or "").strip()
+    if not address or not token:
+        return None
+    
+    if not address.startswith("http"):
+        address = "https://" + address
+    address = address.rstrip("/")
+    
+    try:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+            r = await client.get(
+                f"{address}/api/node/get-usage",
+                headers={"X-Node-Token": token},
+                params={"uuid": uid},
+            )
+            if r.status_code == 200:
+                data = r.json()
+                return int(data.get("used_bytes", 0))
+            elif r.status_code == 404:
+                return 0
+            else:
+                logger.warning(f"[NODE] get-usage from slot {slot} returned {r.status_code}")
+                return None
+    except Exception as e:
+        logger.warning(f"[NODE] get-usage from slot {slot} failed: {e}")
+        return None
+
+
+async def fetch_all_nodes_usage(uid: str) -> int:
+    """از همه نودهای فعال می‌پرسه مصرف این کاربر چقدره و جمعش رو برمی‌گردونه."""
+    total = 0
+    for s in DEFAULT_SLOTS:
+        slot = s["slot"]
+        node = get_node_by_slot(slot)
+        if not node or not node.get("address"):
+            continue
+        usage = await get_usage_from_node(slot, uid)
+        if usage is not None:
+            total += usage
+    return total
+
 
 async def test_all_nodes() -> list[dict]:
     """همه‌ی نودهای پر رو تست می‌کنه."""
