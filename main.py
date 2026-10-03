@@ -1466,6 +1466,16 @@ def fmt_exp_py(ea: str | None) -> str:
 _node_usage_cache: dict = {}  # {uid: (total_bytes, last_refresh_ts)}
 _NODE_USAGE_CACHE_TTL = 5  # ثانیه
 
+def get_cached_node_usage(uid: str) -> int:
+    """مثل get_total_node_usage ولی با cache ۵ ثانیه‌ای."""
+    now = time.time()
+    cached = _node_usage_cache.get(uid)
+    if cached and (now - cached[1]) < _NODE_USAGE_CACHE_TTL:
+        return cached[0]
+    node_total = get_total_node_usage(uid)
+    _node_usage_cache[uid] = (node_total, now)
+    return node_total
+
 
 def get_total_node_usage(uid: str) -> int:
     """جمع مصرف همه نودها برای این کاربر رو برمی‌گردونه (بدون Master)."""
