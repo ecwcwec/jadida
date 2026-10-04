@@ -401,9 +401,10 @@ COUNTRIES = {
     "hk": {"name": "Hong Kong",     "flag": "🇭🇰"},
     "ir": {"name": "Iran",          "flag": "🇮🇷"},
     "br": {"name": "Brazil",        "flag": "🇧🇷"},
+    "be": {"name": "Belgium",       "flag": "🇧🇪"},
 }
 
-MAX_NODES = 13
+MAX_NODES = 10
 
 NODE_SETTINGS_KEYS = (
     "panel_role",
@@ -730,7 +731,7 @@ def init_db():
         );
         CREATE TABLE IF NOT EXISTS nodes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            slot INTEGER UNIQUE CHECK(slot BETWEEN 1 AND 13),
+            slot INTEGER UNIQUE CHECK(slot BETWEEN 1 AND 10),
             name TEXT NOT NULL,
             country_code TEXT NOT NULL,
             flag TEXT NOT NULL,
@@ -1508,7 +1509,7 @@ async def get_total_usage(uid: str) -> int:
     node_total = 0
     try:
         from nodes import fetch_all_nodes_usage
-        node_total = await asyncio.wait_for(fetch_all_nodes_usage(uid), timeout=3.0)
+        node_total = await asyncio.wait_for(fetch_all_nodes_usage(uid), timeout=6.0)
     except asyncio.TimeoutError:
         logger.warning(f"[USAGE] fetch_all_nodes_usage timed out for {uid[:8]}")
         node_total = get_cached_node_usage(uid)
@@ -4677,14 +4678,11 @@ body[dir="rtl"]{direction:rtl;text-align:right}
                 <option value="3">3 - 🇳🇱 Netherlands</option>
                 <option value="4">4 - 🇫🇮 Finland</option>
                 <option value="5">5 - 🇩🇪 Germany</option>
-                <option value="6">6 - 🇮🇳 India</option>
+                <option value="6">6 - 🇵🇱 Poland</option>
                 <option value="7">7 - 🇨🇦 Canada</option>
-                <option value="8">8 - 🇬🇧 United Kingdom</option>
+                <option value="8">8 - 🇧🇪 Belgium</option>
                 <option value="9">9 - 🇫🇷 France</option>
-                <option value="10">10 - 🇯🇵 Japan</option>
-                <option value="11">11 - 🇧🇪 Belgium</option>
-                <option value="12">12 - 🇦🇺 Australia</option>
-                <option value="13">13 - 🇵🇱 Poland</option>
+                <option value="10">10 - 🇦🇺 Australia</option>
               </select>
               <div style="font-size:10px;color:var(--text3);margin-top:4px">توی پنل Master، توی کدوم اسلات قرار داری؟</div>
             </div>
